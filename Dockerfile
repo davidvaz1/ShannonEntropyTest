@@ -1,23 +1,22 @@
 FROM python:3.10-slim
 
-# Install OpenJDK for Java execution
+# Install OpenJDK
 RUN apt-get update && \
     apt-get install -y default-jdk && \
-    apt-get clean;
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy application files
+# Install Python dependencies
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code and templates
 COPY EntropyTest.java server.py /app/
 COPY templates/ /app/templates/
 
-# Install Python dependencies
-RUN pip install flask
-
-EXPOSE 5000
-
-CMD ["python3", "server.py"]
-
+# Compile the Java file during build time so it's ready to go
+RUN javac EntropyTest.java
 
 EXPOSE 8080
 
