@@ -4,9 +4,6 @@ import os
 
 app = Flask(__name__)
 
-# Compile Java file on startup
-os.system("javac EntropyTest.java")
-
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -17,9 +14,9 @@ def analyze():
     password = data.get("password", "")
 
     try:
-        # Run Java program and pass password via stdin
+        # Run the pre-compiled Java program
         process = subprocess.Popen(
-            ["java", "EntropyTest"],
+            ["java", "-cp", ".", "EntropyTest"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -28,11 +25,14 @@ def analyze():
         stdout, stderr = process.communicate(input=password + "\n")
         
         if process.returncode != 0:
+            print(f"Java execution error: {stderr}")
             return jsonify({"error": stderr}), 500
 
-        lines = stdout.strip().split("\n")
+        # Filter out empty lines just in case
+        lines = [line.strip() for line in stdout.strip().split("\n") if line.strip()]
         if len(lines) < 7:
-            return jsonify({"error": "Invalid output from Java program"}), 500
+            print(f"Unexpected Java output: {stdout}")
+            return jsonify({"error": "Invalid output from Java program", "output": stdout}), 500
 
         result = {
             "score": int(lines[0]),
@@ -46,6 +46,7 @@ def analyze():
         return jsonify(result)
 
     except Exception as e:
+        print(f"Server exception: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
