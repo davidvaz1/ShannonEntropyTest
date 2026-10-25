@@ -12,8 +12,13 @@
         
         <div class="mb-4">
             <label class="block text-sm font-medium mb-2">Enter Password:</label>
-            <input type="password" id="passwordInput" placeholder="Type a password..." 
-                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-indigo-500">
+            <div class="flex gap-2">
+                <input type="password" id="passwordInput" placeholder="Type a password..." 
+                    class="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-indigo-500">
+                <button id="testBtn" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 font-medium rounded-lg transition-colors cursor-pointer">
+                    Test
+                </button>
+            </div>
         </div>
 
         <div id="results" class="space-y-3 hidden">
@@ -57,9 +62,10 @@
 
     <script>
         const input = document.getElementById('passwordInput');
+        const testBtn = document.getElementById('testBtn');
         const results = document.getElementById('results');
 
-        input.addEventListener('input', async () => {
+        async function analyzePassword() {
             const password = input.value;
             if (!password) {
                 results.classList.add('hidden');
@@ -83,10 +89,19 @@
                 updateBadge('hasDigit', data.hasDigit);
                 updateBadge('hasSymbol', data.hasSymbol);
 
-                // Update Crack Times
                 document.getElementById('crackOnline').innerText = data.crackTimes.online;
                 document.getElementById('crackCpu').innerText = data.crackTimes.cpu;
                 document.getElementById('crackGpu').innerText = data.crackTimes.gpu;
+            }
+        }
+
+        // Trigger on clicking the Test button
+        testBtn.addEventListener('click', analyzePassword);
+
+        // Trigger on pressing Enter inside the input field
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                analyzePassword();
             }
         });
 
