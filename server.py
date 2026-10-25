@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import subprocess
 import os
+import traceback
 
 app = Flask(__name__)
 
@@ -10,10 +11,13 @@ def index():
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
-    data = request.get_json()
-    password = data.get("password", "")
-
     try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No JSON data received"}), 400
+            
+        password = data.get("password", "")
+
         # Run the pre-compiled Java program
         process = subprocess.Popen(
             ["java", "-cp", ".", "EntropyTest"],
@@ -25,14 +29,17 @@ def analyze():
         stdout, stderr = process.communicate(input=password + "\n")
         
         if process.returncode != 0:
-            print(f"Java execution error: {stderr}")
-            return jsonify({"error": stderr}), 500
+            return jsonify({
+                "error": "Java process exited with error",
+                "stderr": stderr
+            }), 500
 
-        # Filter out empty lines just in case
         lines = [line.strip() for line in stdout.strip().split("\n") if line.strip()]
         if len(lines) < 7:
-            print(f"Unexpected Java output: {stdout}")
-            return jsonify({"error": "Invalid output from Java program", "output": stdout}), 500
+            return jsonify({
+                "error": "Invalid output length from Java program",
+                "stdout": stdout
+            }), 500
 
         result = {
             "score": int(lines[0]),
@@ -46,8 +53,12 @@ def analyze():
         return jsonify(result)
 
     except Exception as e:
-        print(f"Server exception: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        tb = traceback.format_exc()
+        print(tb)  # Prints to Render logs
+        return jsonify({
+            "error": str(e),
+            "traceback": tb
+        }), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
