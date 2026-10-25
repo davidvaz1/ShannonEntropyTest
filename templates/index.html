@@ -22,6 +22,9 @@
         </div>
 
         <div id="results" class="space-y-3 hidden">
+            <!-- Warnings Box for Specialized Tests -->
+            <div id="warningContainer" class="hidden bg-red-900/40 border border-red-500 p-3 rounded-lg text-sm text-red-300 space-y-1"></div>
+
             <div class="flex justify-between bg-gray-700 p-3 rounded-lg">
                 <span>Strength Score:</span>
                 <span id="score" class="font-bold">0</span>
@@ -81,6 +84,17 @@
             if (response.ok) {
                 const data = await response.json();
                 results.classList.remove('hidden');
+                
+                // Handle Warnings / Specialized Tests
+                const warningContainer = document.getElementById('warningContainer');
+                if (data.warnings && data.warnings.length > 0) {
+                    warningContainer.innerHTML = data.warnings.map(w => `<div>${w}</div>`).join('');
+                    warningContainer.classList.remove('hidden');
+                } else {
+                    warningContainer.classList.add('hidden');
+                    warningContainer.innerHTML = '';
+                }
+
                 document.getElementById('score').innerText = data.score + ' / 100';
                 document.getElementById('entropy').innerText = data.entropy + ' bits';
 
@@ -95,10 +109,7 @@
             }
         }
 
-        // Trigger on clicking the Test button
         testBtn.addEventListener('click', analyzePassword);
-
-        // Trigger on pressing Enter inside the input field
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 analyzePassword();
